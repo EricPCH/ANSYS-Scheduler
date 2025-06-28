@@ -9,7 +9,6 @@ from System.Windows.Forms import (
     Button,
     OpenFileDialog,
     Label,
-    ListBox,
     Application,
     MessageBox,
     DialogResult,
@@ -39,11 +38,25 @@ class MyForm(Form):
         self.status_label.Size = Size(800, 20)
         self.Controls.Add(self.status_label)
 
-        # 排程列表
-        self.queue_list = ListBox()
-        self.queue_list.Location = Point(20, 90)
-        self.queue_list.Size = Size(800, 200)
-        self.Controls.Add(self.queue_list)
+        # 排程列表改為 DataGridView
+        self.queue_grid = DataGridView()
+        self.queue_grid.Location = Point(20, 90)
+        self.queue_grid.Size = Size(800, 200)
+        self.queue_grid.ReadOnly = True
+        self.queue_grid.ColumnHeadersHeightSizeMode = (
+            DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        )
+        self.queue_grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+
+        q_file_col = DataGridViewTextBoxColumn()
+        q_file_col.HeaderText = "File"
+        submit_col = DataGridViewTextBoxColumn()
+        submit_col.HeaderText = "Submit Time"
+
+        self.queue_grid.Columns.Add(q_file_col)
+        self.queue_grid.Columns.Add(submit_col)
+
+        self.Controls.Add(self.queue_grid)
 
         # 完成列表改為 DataGridView
         self.finished_grid = DataGridView()
@@ -72,9 +85,10 @@ class MyForm(Form):
         self.Controls.Add(self.finished_grid)
 
         self.queue_paths = []
+        self.queue_times = []
         self.finished_paths = []
         self.tooltip = ToolTip()
-        self.queue_list.MouseMove += self.show_queue_tooltip
+        self.queue_grid.MouseMove += self.show_queue_tooltip
         self.finished_grid.MouseMove += self.show_finished_tooltip
 
         self.is_simulating = False
@@ -116,57 +130,71 @@ class MyForm(Form):
             fname = dialog.FileName
             if fname.lower().endswith('.aedt') or fname.lower().endswith('.aedtz'):
                 self.queue_paths.append(fname)
-                self.queue_list.Items.Add(Path.GetFileName(fname))
+                submit_time = System.DateTime.Now
+                self.queue_times.append(submit_time)
+                self.queue_grid.Rows.Add(
+                    Path.GetFileName(fname), submit_time.ToString()
+                )
                 if not self.is_simulating:
                     self.start_simulation()
             else:
                 MessageBox.Show("Only .aedt or .aedtz files are allowed.")
 
     def remove_file(self, sender, event):
-        index = self.queue_list.SelectedIndex
+        index = -1
+        if self.queue_grid.SelectedCells.Count > 0:
+            index = self.queue_grid.SelectedCells[0].RowIndex
         if index != -1:
             if self.is_simulating and index == 0:
                 MessageBox.Show("Cannot remove file being simulated.")
                 return
-            self.queue_list.Items.RemoveAt(index)
+            self.queue_grid.Rows.RemoveAt(index)
             del self.queue_paths[index]
+            del self.queue_times[index]
 
     def move_up(self, sender, event):
-        index = self.queue_list.SelectedIndex
+        index = -1
+        if self.queue_grid.SelectedCells.Count > 0:
+            index = self.queue_grid.SelectedCells[0].RowIndex
         if index > 0:
             if self.is_simulating and (index - 1 == 0):
                 MessageBox.Show("Cannot move file being simulated.")
                 return
-            item = self.queue_list.Items[index]
-            self.queue_list.Items.RemoveAt(index)
-            self.queue_list.Items.Insert(index - 1, item)
-            path = self.queue_paths[index]
-            del self.queue_paths[index]
-            self.queue_paths.insert(index - 1, path)
-            self.queue_list.SelectedIndex = index - 1
+            self.swap_queue_rows(index, index - 1)
+            self.queue_paths.insert(index - 1, self.queue_paths.pop(index))
+            self.queue_times.insert(index - 1, self.queue_times.pop(index))
+            self.queue_grid.ClearSelection()
+            self.queue_grid.Rows[index - 1].Selected = True
 
     def move_down(self, sender, event):
-        index = self.queue_list.SelectedIndex
-        if index != -1 and index < self.queue_list.Items.Count - 1:
+        index = -1
+        if self.queue_grid.SelectedCells.Count > 0:
+            index = self.queue_grid.SelectedCells[0].RowIndex
+        if index != -1 and index < self.queue_grid.Rows.Count - 1:
             if self.is_simulating and index == 0:
                 MessageBox.Show("Cannot move file being simulated.")
                 return
-            item = self.queue_list.Items[index]
-            self.queue_list.Items.RemoveAt(index)
-            self.queue_list.Items.Insert(index + 1, item)
-            path = self.queue_paths[index]
-            del self.queue_paths[index]
-            self.queue_paths.insert(index + 1, path)
-            self.queue_list.SelectedIndex = index + 1
+            self.swap_queue_rows(index, index + 1)
+            self.queue_paths.insert(index + 1, self.queue_paths.pop(index))
+            self.queue_times.insert(index + 1, self.queue_times.pop(index))
+            self.queue_grid.ClearSelection()
+            self.queue_grid.Rows[index + 1].Selected = True
+
+    def swap_queue_rows(self, i, j):
+        for col in range(self.queue_grid.ColumnCount):
+            tmp = self.queue_grid.Rows[i].Cells[col].Value
+            self.queue_grid.Rows[i].Cells[col].Value = self.queue_grid.Rows[j].Cells[col].Value
+            self.queue_grid.Rows[j].Cells[col].Value = tmp
 
     def show_queue_tooltip(self, sender, event):
-        idx = self.queue_list.IndexFromPoint(event.Location)
-        if idx != -1 and idx < len(self.queue_paths):
+        hit = self.queue_grid.HitTest(event.X, event.Y)
+        idx = hit.RowIndex
+        if idx >= 0 and idx < len(self.queue_paths):
             text = self.queue_paths[idx]
-            if self.tooltip.GetToolTip(self.queue_list) != text:
-                self.tooltip.SetToolTip(self.queue_list, text)
+            if self.tooltip.GetToolTip(self.queue_grid) != text:
+                self.tooltip.SetToolTip(self.queue_grid, text)
         else:
-            self.tooltip.SetToolTip(self.queue_list, "")
+            self.tooltip.SetToolTip(self.queue_grid, "")
 
     def show_finished_tooltip(self, sender, event):
         hit = self.finished_grid.HitTest(event.X, event.Y)
@@ -202,8 +230,9 @@ class MyForm(Form):
                 System.Threading.Thread.Sleep(1000)
             stop_time = System.DateTime.Now
             duration = stop_time - start_time
-            self.queue_list.Items.RemoveAt(0)
+            self.queue_grid.Rows.RemoveAt(0)
             del self.queue_paths[0]
+            del self.queue_times[0]
             self.finished_grid.Rows.Add(
                 Path.GetFileName(file_path),
                 start_time.ToString(),
