@@ -25,12 +25,18 @@ from System.IO import Path
 import System.Threading
 import threading
 import subprocess
+import os
 
 class MyForm(Form):
     def __init__(self):
         self.Text = "AEDT Scheduler"
         self.Size = Size(840, 550)
         Control.CheckForIllegalCrossThreadCalls = False
+
+        self.ansysedt_path = os.environ.get(
+            "ANSYSEDT_PATH",
+            r"C:\Program Files\ANSYS Inc\v251\AnsysEM\ansysedt",
+        )
 
         # 狀態顯示
         self.status_label = Label()
@@ -251,11 +257,10 @@ class MyForm(Form):
             self.status_label.Text = "Simulating: " + file_path
             start_time = System.DateTime.Now
             if file_path.lower().endswith('.aedt'):
-                cmd = (
-                    r'"C:\\Program Files\\ANSYS Inc\\v251\\AnsysEM\\ansysedt" '
-                    r'-batchsolve {ng}"{file}"'.format(
-                        ng='-ng ' if ng_flag else '', file=file_path
-                    )
+                cmd = '"{exe}" -batchsolve {ng}"{file}"'.format(
+                    exe=self.ansysedt_path,
+                    ng='-ng ' if ng_flag else '',
+                    file=file_path,
                 )
                 subprocess.call(cmd, shell=True)
             else:
