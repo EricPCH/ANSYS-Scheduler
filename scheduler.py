@@ -14,6 +14,7 @@ from System.Windows.Forms import (
 )
 from System.Drawing import Point, Size
 import System.Threading
+import subprocess
 
 class MyForm(Form):
     def __init__(self):
@@ -107,7 +108,14 @@ class MyForm(Form):
             file_path = self.queue_list.Items[0]
             self.status_label.Text = "Simulating: " + file_path
             Application.DoEvents()
-            System.Threading.Thread.Sleep(1000)
+            if file_path.lower().endswith('.aedt'):
+                cmd = (
+                    r'"C:\\Program Files\\ANSYS Inc\\v251\\AnsysEM\\ansysedt" '
+                    r'-batchsolve "{0}"'.format(file_path)
+                )
+                subprocess.call(cmd, shell=True)
+            else:
+                System.Threading.Thread.Sleep(1000)
             self.queue_list.Items.RemoveAt(0)
             self.finished_list.Items.Add(file_path)
         self.status_label.Text = "Finished"
