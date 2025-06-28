@@ -11,10 +11,10 @@ track what has been processed.
 Simulation begins as soon as a file is added to the queue, so there is no
 longer a separate "Start" button.
 
-Only `.aedt` or `.aedtz` files can be added to the queue. Run `run.bat` to
-start the application in an Ansys IronPython environment. Edit the
-`ANSYSEDT_PATH` variable inside `run.bat` if your installation lives in a
-different location.
+Use the **Add File** button to select one or more `.aedt` or `.aedtz` files.
+Run `run.bat` to start the application in an Ansys IronPython environment.
+Edit the `ANSYSEDT_PATH` variable inside `run.bat` if your installation lives
+in a different location.
 
 Before adding a file you can tick the **Non Graphical** check box to run that
 simulation in non-graphical mode. Each file can be configured independently.

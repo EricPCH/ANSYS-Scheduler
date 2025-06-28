@@ -156,23 +156,26 @@ class MyForm(Form):
         dialog = OpenFileDialog()
         dialog.Title = "選擇檔案"
         dialog.Filter = "AEDT Files (*.aedt;*.aedtz)|*.aedt;*.aedtz"
+        dialog.Multiselect = True
         if dialog.ShowDialog() == DialogResult.OK:
-            fname = dialog.FileName
-            if fname.lower().endswith('.aedt') or fname.lower().endswith('.aedtz'):
-                self.queue_paths.append(fname)
-                submit_time = System.DateTime.Now
-                self.queue_times.append(submit_time)
-                self.queue_ngs.append(self.ng_checkbox.Checked)
-                self.queue_grid.Rows.Add(
-                    Path.GetFileName(fname),
-                    "Yes" if self.ng_checkbox.Checked else "No",
-                    submit_time.ToString(),
-                    fname,
-                )
-                if not self.is_simulating:
-                    self.start_simulation()
-            else:
-                MessageBox.Show("Only .aedt or .aedtz files are allowed.")
+            files_added = False
+            for fname in dialog.FileNames:
+                if fname.lower().endswith('.aedt') or fname.lower().endswith('.aedtz'):
+                    self.queue_paths.append(fname)
+                    submit_time = System.DateTime.Now
+                    self.queue_times.append(submit_time)
+                    self.queue_ngs.append(self.ng_checkbox.Checked)
+                    self.queue_grid.Rows.Add(
+                        Path.GetFileName(fname),
+                        "Yes" if self.ng_checkbox.Checked else "No",
+                        submit_time.ToString(),
+                        fname,
+                    )
+                    files_added = True
+                else:
+                    MessageBox.Show("Only .aedt or .aedtz files are allowed.")
+            if files_added and not self.is_simulating:
+                self.start_simulation()
 
     def remove_file(self, sender, event):
         index = -1
