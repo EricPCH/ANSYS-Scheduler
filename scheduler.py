@@ -42,6 +42,9 @@ class MyForm(Form):
         self.finished_list.Size = Size(800, 200)
         self.Controls.Add(self.finished_list)
 
+        self.is_simulating = False
+        self.current_file = None
+
         # 新增檔案按鈕
         self.add_button = Button()
         self.add_button.Text = "Add File"
@@ -70,13 +73,6 @@ class MyForm(Form):
         self.down_button.Click += self.move_down
         self.Controls.Add(self.down_button)
 
-        # 執行按鈕
-        self.start_button = Button()
-        self.start_button.Text = "Start"
-        self.start_button.Location = Point(340, 480)
-        self.start_button.Click += self.start_simulation
-        self.Controls.Add(self.start_button)
-
     def add_file(self, sender, event):
         dialog = OpenFileDialog()
         dialog.Title = "選擇檔案"
@@ -85,17 +81,25 @@ class MyForm(Form):
             fname = dialog.FileName
             if fname.lower().endswith('.aedt') or fname.lower().endswith('.aedtz'):
                 self.queue_list.Items.Add(fname)
+                if not self.is_simulating:
+                    self.start_simulation()
             else:
                 MessageBox.Show("Only .aedt or .aedtz files are allowed.")
 
     def remove_file(self, sender, event):
         index = self.queue_list.SelectedIndex
         if index != -1:
+            if self.is_simulating and index == 0:
+                MessageBox.Show("Cannot remove file being simulated.")
+                return
             self.queue_list.Items.RemoveAt(index)
 
     def move_up(self, sender, event):
         index = self.queue_list.SelectedIndex
         if index > 0:
+            if self.is_simulating and (index - 1 == 0):
+                MessageBox.Show("Cannot move file being simulated.")
+                return
             item = self.queue_list.Items[index]
             self.queue_list.Items.RemoveAt(index)
             self.queue_list.Items.Insert(index - 1, item)
@@ -104,14 +108,19 @@ class MyForm(Form):
     def move_down(self, sender, event):
         index = self.queue_list.SelectedIndex
         if index != -1 and index < self.queue_list.Items.Count - 1:
+            if self.is_simulating and index == 0:
+                MessageBox.Show("Cannot move file being simulated.")
+                return
             item = self.queue_list.Items[index]
             self.queue_list.Items.RemoveAt(index)
             self.queue_list.Items.Insert(index + 1, item)
             self.queue_list.SelectedIndex = index + 1
 
-    def start_simulation(self, sender, event):
+    def start_simulation(self, sender=None, event=None):
+        self.is_simulating = True
         while self.queue_list.Items.Count > 0:
             file_path = self.queue_list.Items[0]
+            self.current_file = file_path
             self.status_label.Text = "Simulating: " + file_path
             Application.DoEvents()
             if file_path.lower().endswith('.aedt'):
@@ -124,7 +133,9 @@ class MyForm(Form):
                 System.Threading.Thread.Sleep(1000)
             self.queue_list.Items.RemoveAt(0)
             self.finished_list.Items.Add(file_path)
+            self.current_file = None
         self.status_label.Text = "Finished"
+        self.is_simulating = False
 
 form = MyForm()
 form.ShowDialog()
