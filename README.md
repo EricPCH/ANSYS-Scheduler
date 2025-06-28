@@ -18,3 +18,11 @@ different location.
 
 Before adding a file you can tick the **Non Graphical** check box to run that
 simulation in non-graphical mode. Each file can be configured independently.
+
+## 使用說明
+
+* 請將 `scheduler.py` 和 `run.bat` 置於同一目錄中使用。
+* 要使用程式必須修改 `run.bat` 內的兩個路徑：
+  1. IronPython `ipy64.exe` 的範例路徑。
+  2. `ANSYSEDT_PATH` 設定的 `ansysedt.exe` 目錄。
+
