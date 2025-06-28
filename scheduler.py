@@ -26,7 +26,7 @@ from System.Windows.Forms import (
     RowStyle,
     SizeType,
 )
-from System.Drawing import Size
+from System.Drawing import Size, Color
 from System.IO import Path
 import System.Threading
 import threading
@@ -188,6 +188,12 @@ class MyForm(Form):
         self.stop_event = threading.Event()
         self.FormClosing += self.on_close
 
+    def highlight_current_row(self):
+        for i in range(self.queue_grid.Rows.Count):
+            self.queue_grid.Rows[i].DefaultCellStyle.BackColor = Color.White
+        if self.is_simulating and self.queue_grid.Rows.Count > 0:
+            self.queue_grid.Rows[0].DefaultCellStyle.BackColor = Color.LightGreen
+
     def add_file(self, sender, event):
         dialog = OpenFileDialog()
         dialog.Title = "選擇檔案"
@@ -218,6 +224,8 @@ class MyForm(Form):
                     MessageBox.Show("Only .aedt or .aedtz files are allowed.")
             if files_added and not self.is_simulating:
                 self.start_simulation()
+            else:
+                self.highlight_current_row()
 
     def remove_file(self, sender, event):
         index = -1
@@ -231,6 +239,7 @@ class MyForm(Form):
             del self.queue_paths[index]
             del self.queue_times[index]
             del self.queue_ngs[index]
+            self.highlight_current_row()
 
     def move_up(self, sender, event):
         index = -1
@@ -246,6 +255,7 @@ class MyForm(Form):
             self.queue_ngs.insert(index - 1, self.queue_ngs.pop(index))
             self.queue_grid.ClearSelection()
             self.queue_grid.Rows[index - 1].Selected = True
+            self.highlight_current_row()
 
     def move_down(self, sender, event):
         index = -1
@@ -264,6 +274,7 @@ class MyForm(Form):
             self.queue_ngs.insert(index + 1, self.queue_ngs.pop(index))
             self.queue_grid.ClearSelection()
             self.queue_grid.Rows[index + 1].Selected = True
+            self.highlight_current_row()
 
     def swap_queue_rows(self, i, j):
         for col in range(self.queue_grid.ColumnCount):
@@ -295,12 +306,14 @@ class MyForm(Form):
         if self.is_simulating:
             return
         self.is_simulating = True
+        self.highlight_current_row()
         self.sim_thread = threading.Thread(target=self.run_simulation)
         self.sim_thread.IsBackground = True
         self.sim_thread.start()
 
     def run_simulation(self):
         while len(self.queue_paths) > 0 and not self.stop_event.is_set():
+            self.highlight_current_row()
             file_path = self.queue_paths[0]
             ng_flag = self.queue_ngs[0]
             self.current_file = file_path
@@ -325,6 +338,7 @@ class MyForm(Form):
             del self.queue_paths[0]
             del self.queue_times[0]
             del self.queue_ngs[0]
+            self.highlight_current_row()
             if not self.stop_event.is_set():
                 self.finished_grid.Rows.Add(
                     Path.GetFileName(file_path),
@@ -335,9 +349,10 @@ class MyForm(Form):
                 )
                 self.finished_paths.append(file_path)
             self.current_file = None
+        self.highlight_current_row()
         self.status_label.Text = "Finished"
         self.is_simulating = False
-
+        
     def on_close(self, sender, event):
         self.stop_event.set()
         if self.current_process is not None and self.current_process.poll() is None:
