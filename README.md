@@ -19,6 +19,10 @@ in a different location.
 Before adding a file you can tick the **Non Graphical** check box to run that
 simulation in non-graphical mode. Each file can be configured independently.
 
+![image](https://github.com/user-attachments/assets/cd04f12b-c9a6-4c38-91c0-c225b185cf9d)
+
+
+
 ## 使用說明
 
 * 請將 `scheduler.py` 和 `run.bat` 置於同一目錄中使用。
