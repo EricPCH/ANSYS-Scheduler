@@ -26,6 +26,7 @@ from System.Windows.Forms import (
     RowStyle,
     SizeType,
     FormWindowState,
+    DataGridViewColumnSortMode,
 )
 from System.Drawing import Size, Color
 from System.IO import Path
@@ -111,12 +112,16 @@ class MyForm(Form):
 
         q_file_col = DataGridViewTextBoxColumn()
         q_file_col.HeaderText = "File"
+        q_file_col.SortMode = DataGridViewColumnSortMode.NotSortable
         ng_col = DataGridViewTextBoxColumn()
         ng_col.HeaderText = "NG"
+        ng_col.SortMode = DataGridViewColumnSortMode.NotSortable
         submit_col = DataGridViewTextBoxColumn()
         submit_col.HeaderText = "Submit Time"
+        submit_col.SortMode = DataGridViewColumnSortMode.NotSortable
         path_col = DataGridViewTextBoxColumn()
         path_col.HeaderText = "Full Path"
+        path_col.SortMode = DataGridViewColumnSortMode.NotSortable
 
         self.queue_grid.Columns.Add(q_file_col)
         self.queue_grid.Columns.Add(ng_col)
