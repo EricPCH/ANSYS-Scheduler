@@ -11,6 +11,7 @@ from System.Windows.Forms import (
     Label,
     ListBox,
     Application,
+    MessageBox,
 )
 from System.Drawing import Point, Size
 import System.Threading
@@ -78,9 +79,13 @@ class MyForm(Form):
     def add_file(self, sender, event):
         dialog = OpenFileDialog()
         dialog.Title = "選擇檔案"
-        dialog.Filter = "All files (*.*)|*.*"
+        dialog.Filter = "AEDT Files (*.aedt;*.aedtz)|*.aedt;*.aedtz"
         if dialog.ShowDialog() == 1:
-            self.queue_list.Items.Add(dialog.FileName)
+            fname = dialog.FileName
+            if fname.lower().endswith('.aedt') or fname.lower().endswith('.aedtz'):
+                self.queue_list.Items.Add(fname)
+            else:
+                MessageBox.Show("Only .aedt or .aedtz files are allowed.")
 
     def remove_file(self, sender, event):
         index = self.queue_list.SelectedIndex
