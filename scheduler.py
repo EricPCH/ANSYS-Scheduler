@@ -301,12 +301,11 @@ class MyForm(Form):
             self.status_label.Text = "Simulating: " + file_path
             start_time = System.DateTime.Now
             if file_path.lower().endswith('.aedt'):
-                cmd = '"{exe}" -batchsolve {ng}"{file}"'.format(
-                    exe=self.ansysedt_path,
-                    ng='-ng ' if ng_flag else '',
-                    file=file_path,
-                )
-                self.current_process = subprocess.Popen(cmd, shell=True)
+                cmd = [self.ansysedt_path, "-batchsolve"]
+                if ng_flag:
+                    cmd.append("-ng")
+                cmd.append(file_path)
+                self.current_process = subprocess.Popen(cmd)
                 self.current_process.wait()
                 self.current_process = None
                 if self.stop_event.is_set():
@@ -338,8 +337,18 @@ class MyForm(Form):
         if self.current_process is not None and self.current_process.poll() is None:
             try:
                 self.current_process.terminate()
+                self.current_process.wait(5)
             except Exception:
                 pass
+            if self.current_process.poll() is None:
+                try:
+                    self.current_process.kill()
+                except Exception:
+                    pass
+        try:
+            subprocess.call("taskkill /f /im ansysedt.exe", shell=True)
+        except Exception:
+            pass
         if hasattr(self, 'sim_thread') and self.sim_thread.is_alive():
             self.sim_thread.join(1)
 
