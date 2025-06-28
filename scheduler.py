@@ -19,6 +19,7 @@ from System.Windows.Forms import (
     CheckBox,
     DataGridViewAutoSizeColumnsMode,
     DataGridViewColumnHeadersHeightSizeMode,
+    FormBorderStyle,
 )
 from System.Drawing import Point, Size
 from System.IO import Path
@@ -31,6 +32,8 @@ class MyForm(Form):
     def __init__(self):
         self.Text = "AEDT Scheduler"
         self.Size = Size(840, 550)
+        self.FormBorderStyle = FormBorderStyle.FixedSingle
+        self.MaximizeBox = False
         Control.CheckForIllegalCrossThreadCalls = False
 
         self.ansysedt_path = os.environ.get(
