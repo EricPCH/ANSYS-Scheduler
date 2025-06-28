@@ -12,6 +12,7 @@ from System.Windows.Forms import (
     ListBox,
     Application,
     MessageBox,
+    DialogResult,
 )
 from System.Drawing import Point, Size
 import System.Threading
@@ -80,7 +81,7 @@ class MyForm(Form):
         dialog = OpenFileDialog()
         dialog.Title = "選擇檔案"
         dialog.Filter = "AEDT Files (*.aedt;*.aedtz)|*.aedt;*.aedtz"
-        if dialog.ShowDialog() == 1:
+        if dialog.ShowDialog() == DialogResult.OK:
             fname = dialog.FileName
             if fname.lower().endswith('.aedt') or fname.lower().endswith('.aedtz'):
                 self.queue_list.Items.Add(fname)
