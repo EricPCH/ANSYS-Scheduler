@@ -20,8 +20,13 @@ from System.Windows.Forms import (
     DataGridViewAutoSizeColumnsMode,
     DataGridViewColumnHeadersHeightSizeMode,
     FormBorderStyle,
+    FlowLayoutPanel,
+    TableLayoutPanel,
+    DockStyle,
+    RowStyle,
+    SizeType,
 )
-from System.Drawing import Point, Size
+from System.Drawing import Size
 from System.IO import Path
 import System.Threading
 import threading
@@ -44,21 +49,56 @@ class MyForm(Form):
         # 狀態顯示
         self.status_label = Label()
         self.status_label.Text = "Ready"
-        self.status_label.Location = Point(20, 20)
-        self.status_label.Size = Size(800, 20)
-        self.Controls.Add(self.status_label)
+        self.status_label.AutoSize = True
+        self.status_label.Dock = DockStyle.Top
+
+        # 按鈕列使用 FlowLayoutPanel
+        self.button_panel = FlowLayoutPanel()
+        self.button_panel.Dock = DockStyle.Top
+        self.button_panel.AutoSize = True
+
+        # 新增檔案按鈕
+        self.add_button = Button()
+        self.add_button.Text = "Add File"
+        self.add_button.AutoSize = True
+        self.add_button.Click += self.add_file
+        self.button_panel.Controls.Add(self.add_button)
+
+        # 移除檔案按鈕
+        self.remove_button = Button()
+        self.remove_button.Text = "Remove"
+        self.remove_button.AutoSize = True
+        self.remove_button.Click += self.remove_file
+        self.button_panel.Controls.Add(self.remove_button)
+
+        # 上移按鈕
+        self.up_button = Button()
+        self.up_button.Text = "Up"
+        self.up_button.AutoSize = True
+        self.up_button.Click += self.move_up
+        self.button_panel.Controls.Add(self.up_button)
+
+        # 下移按鈕
+        self.down_button = Button()
+        self.down_button.Text = "Down"
+        self.down_button.AutoSize = True
+        self.down_button.Click += self.move_down
+        self.button_panel.Controls.Add(self.down_button)
+
+        # 非圖形化模式選項
+        self.ng_checkbox = CheckBox()
+        self.ng_checkbox.Text = "Non Graphical"
+        self.ng_checkbox.AutoSize = True
+        self.button_panel.Controls.Add(self.ng_checkbox)
 
         # Queue Jobs label
         self.queue_label = Label()
         self.queue_label.Text = "Queue Jobs"
         self.queue_label.AutoSize = True
-        self.queue_label.Location = Point(20, 70)
-        self.Controls.Add(self.queue_label)
 
         # 排程列表改為 DataGridView
         self.queue_grid = DataGridView()
-        self.queue_grid.Location = Point(20, 90)
-        self.queue_grid.Size = Size(800, 200)
+        self.queue_grid.Dock = DockStyle.Fill
         self.queue_grid.ReadOnly = True
         self.queue_grid.AllowUserToAddRows = False
         self.queue_grid.ColumnHeadersHeightSizeMode = (
@@ -81,19 +121,14 @@ class MyForm(Form):
         self.queue_grid.Columns.Add(submit_col)
         self.queue_grid.Columns.Add(path_col)
 
-        self.Controls.Add(self.queue_grid)
-
         # Completed Jobs label
         self.finished_label = Label()
         self.finished_label.Text = "Completed Jobs"
         self.finished_label.AutoSize = True
-        self.finished_label.Location = Point(20, 280)
-        self.Controls.Add(self.finished_label)
 
         # 完成列表改為 DataGridView
         self.finished_grid = DataGridView()
-        self.finished_grid.Location = Point(20, 300)
-        self.finished_grid.Size = Size(800, 200)
+        self.finished_grid.Dock = DockStyle.Fill
         self.finished_grid.ReadOnly = True
         self.finished_grid.AllowUserToAddRows = False
         self.finished_grid.ColumnHeadersHeightSizeMode = (
@@ -119,7 +154,25 @@ class MyForm(Form):
         self.finished_grid.Columns.Add(dur_col)
         self.finished_grid.Columns.Add(path2_col)
 
-        self.Controls.Add(self.finished_grid)
+        # 使用 TableLayoutPanel 組織排程和完成區域
+        self.data_layout = TableLayoutPanel()
+        self.data_layout.Dock = DockStyle.Fill
+        self.data_layout.ColumnCount = 1
+        self.data_layout.RowCount = 4
+        self.data_layout.RowStyles.Add(RowStyle(SizeType.AutoSize))
+        self.data_layout.RowStyles.Add(RowStyle(SizeType.Percent, 50))
+        self.data_layout.RowStyles.Add(RowStyle(SizeType.AutoSize))
+        self.data_layout.RowStyles.Add(RowStyle(SizeType.Percent, 50))
+
+        self.data_layout.Controls.Add(self.queue_label, 0, 0)
+        self.data_layout.Controls.Add(self.queue_grid, 0, 1)
+        self.data_layout.Controls.Add(self.finished_label, 0, 2)
+        self.data_layout.Controls.Add(self.finished_grid, 0, 3)
+
+        # 將元件加入表單
+        self.Controls.Add(self.data_layout)
+        self.Controls.Add(self.button_panel)
+        self.Controls.Add(self.status_label)
 
         self.queue_paths = []
         self.queue_times = []
@@ -131,40 +184,6 @@ class MyForm(Form):
 
         self.is_simulating = False
         self.current_file = None
-
-        # 新增檔案按鈕
-        self.add_button = Button()
-        self.add_button.Text = "Add File"
-        self.add_button.Location = Point(20, 50)
-        self.add_button.Click += self.add_file
-        self.Controls.Add(self.add_button)
-
-        # 移除檔案按鈕
-        self.remove_button = Button()
-        self.remove_button.Text = "Remove"
-        self.remove_button.Location = Point(110, 50)
-        self.remove_button.Click += self.remove_file
-        self.Controls.Add(self.remove_button)
-
-        # 上移按鈕
-        self.up_button = Button()
-        self.up_button.Text = "Up"
-        self.up_button.Location = Point(200, 50)
-        self.up_button.Click += self.move_up
-        self.Controls.Add(self.up_button)
-
-        # 下移按鈕
-        self.down_button = Button()
-        self.down_button.Text = "Down"
-        self.down_button.Location = Point(280, 50)
-        self.down_button.Click += self.move_down
-        self.Controls.Add(self.down_button)
-
-        # 非圖形化模式選項
-        self.ng_checkbox = CheckBox()
-        self.ng_checkbox.Text = "Non Graphical"
-        self.ng_checkbox.Location = Point(360, 50)
-        self.Controls.Add(self.ng_checkbox)
 
     def add_file(self, sender, event):
         dialog = OpenFileDialog()
