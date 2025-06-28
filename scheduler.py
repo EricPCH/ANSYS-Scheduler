@@ -16,6 +16,7 @@ from System.Windows.Forms import (
     ToolTip,
     DataGridView,
     DataGridViewTextBoxColumn,
+    CheckBox,
     DataGridViewAutoSizeColumnsMode,
     DataGridViewColumnHeadersHeightSizeMode,
 )
@@ -51,12 +52,15 @@ class MyForm(Form):
 
         q_file_col = DataGridViewTextBoxColumn()
         q_file_col.HeaderText = "File"
+        ng_col = DataGridViewTextBoxColumn()
+        ng_col.HeaderText = "NG"
         submit_col = DataGridViewTextBoxColumn()
         submit_col.HeaderText = "Submit Time"
         path_col = DataGridViewTextBoxColumn()
         path_col.HeaderText = "Full Path"
 
         self.queue_grid.Columns.Add(q_file_col)
+        self.queue_grid.Columns.Add(ng_col)
         self.queue_grid.Columns.Add(submit_col)
         self.queue_grid.Columns.Add(path_col)
 
@@ -94,6 +98,7 @@ class MyForm(Form):
 
         self.queue_paths = []
         self.queue_times = []
+        self.queue_ngs = []
         self.finished_paths = []
         self.tooltip = ToolTip()
         self.queue_grid.MouseMove += self.show_queue_tooltip
@@ -130,6 +135,12 @@ class MyForm(Form):
         self.down_button.Click += self.move_down
         self.Controls.Add(self.down_button)
 
+        # 非圖形化模式選項
+        self.ng_checkbox = CheckBox()
+        self.ng_checkbox.Text = "Non Graphical"
+        self.ng_checkbox.Location = Point(330, 50)
+        self.Controls.Add(self.ng_checkbox)
+
     def add_file(self, sender, event):
         dialog = OpenFileDialog()
         dialog.Title = "選擇檔案"
@@ -140,8 +151,10 @@ class MyForm(Form):
                 self.queue_paths.append(fname)
                 submit_time = System.DateTime.Now
                 self.queue_times.append(submit_time)
+                self.queue_ngs.append(self.ng_checkbox.Checked)
                 self.queue_grid.Rows.Add(
                     Path.GetFileName(fname),
+                    "Yes" if self.ng_checkbox.Checked else "No",
                     submit_time.ToString(),
                     fname,
                 )
@@ -161,6 +174,7 @@ class MyForm(Form):
             self.queue_grid.Rows.RemoveAt(index)
             del self.queue_paths[index]
             del self.queue_times[index]
+            del self.queue_ngs[index]
 
     def move_up(self, sender, event):
         index = -1
@@ -173,6 +187,7 @@ class MyForm(Form):
             self.swap_queue_rows(index, index - 1)
             self.queue_paths.insert(index - 1, self.queue_paths.pop(index))
             self.queue_times.insert(index - 1, self.queue_times.pop(index))
+            self.queue_ngs.insert(index - 1, self.queue_ngs.pop(index))
             self.queue_grid.ClearSelection()
             self.queue_grid.Rows[index - 1].Selected = True
 
@@ -190,6 +205,7 @@ class MyForm(Form):
             self.swap_queue_rows(index, index + 1)
             self.queue_paths.insert(index + 1, self.queue_paths.pop(index))
             self.queue_times.insert(index + 1, self.queue_times.pop(index))
+            self.queue_ngs.insert(index + 1, self.queue_ngs.pop(index))
             self.queue_grid.ClearSelection()
             self.queue_grid.Rows[index + 1].Selected = True
 
@@ -230,13 +246,16 @@ class MyForm(Form):
     def run_simulation(self):
         while len(self.queue_paths) > 0:
             file_path = self.queue_paths[0]
+            ng_flag = self.queue_ngs[0]
             self.current_file = file_path
             self.status_label.Text = "Simulating: " + file_path
             start_time = System.DateTime.Now
             if file_path.lower().endswith('.aedt'):
                 cmd = (
                     r'"C:\\Program Files\\ANSYS Inc\\v251\\AnsysEM\\ansysedt" '
-                    r'-batchsolve "{0}"'.format(file_path)
+                    r'-batchsolve {ng}"{file}"'.format(
+                        ng='-ng ' if ng_flag else '', file=file_path
+                    )
                 )
                 subprocess.call(cmd, shell=True)
             else:
@@ -246,6 +265,7 @@ class MyForm(Form):
             self.queue_grid.Rows.RemoveAt(0)
             del self.queue_paths[0]
             del self.queue_times[0]
+            del self.queue_ngs[0]
             self.finished_grid.Rows.Add(
                 Path.GetFileName(file_path),
                 start_time.ToString(),
