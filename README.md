@@ -25,4 +25,5 @@ simulation in non-graphical mode. Each file can be configured independently.
 * 要使用程式必須修改 `run.bat` 內的兩個路徑：
   1. IronPython `ipy64.exe` 的範例路徑。
   2. `ANSYSEDT_PATH` 設定的 `ansysedt.exe` 目錄。
+* 在排程列表或完成列表中，雙擊 **Full Path** 欄位可開啟該檔案所在資料夾。
 

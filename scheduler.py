@@ -109,6 +109,7 @@ class MyForm(Form):
         )
         self.queue_grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
         self.queue_grid.ShowCellToolTips = False
+        self.queue_grid.CellDoubleClick += self.open_queue_folder
 
         q_file_col = DataGridViewTextBoxColumn()
         q_file_col.HeaderText = "File"
@@ -143,6 +144,7 @@ class MyForm(Form):
         )
         self.finished_grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
         self.finished_grid.ShowCellToolTips = False
+        self.finished_grid.CellDoubleClick += self.open_finished_folder
 
         file_col = DataGridViewTextBoxColumn()
         file_col.HeaderText = "File"
@@ -311,6 +313,22 @@ class MyForm(Form):
                 self.tooltip.SetToolTip(self.finished_grid, text)
         else:
             self.tooltip.SetToolTip(self.finished_grid, "")
+
+    def open_queue_folder(self, sender, event):
+        if event.RowIndex >= 0 and event.RowIndex < len(self.queue_paths):
+            folder = os.path.dirname(self.queue_paths[event.RowIndex])
+            try:
+                subprocess.Popen(["explorer", folder])
+            except Exception:
+                MessageBox.Show("Unable to open folder.")
+
+    def open_finished_folder(self, sender, event):
+        if event.RowIndex >= 0 and event.RowIndex < len(self.finished_paths):
+            folder = os.path.dirname(self.finished_paths[event.RowIndex])
+            try:
+                subprocess.Popen(["explorer", folder])
+            except Exception:
+                MessageBox.Show("Unable to open folder.")
 
     def start_simulation(self, sender=None, event=None):
         if self.is_simulating:
