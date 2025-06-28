@@ -15,6 +15,10 @@ from System.Windows.Forms import (
     DialogResult,
     Control,
     ToolTip,
+    DataGridView,
+    DataGridViewTextBoxColumn,
+    DataGridViewAutoSizeColumnsMode,
+    DataGridViewColumnHeadersHeightSizeMode,
 )
 from System.Drawing import Point, Size
 from System.IO import Path
@@ -41,17 +45,37 @@ class MyForm(Form):
         self.queue_list.Size = Size(800, 200)
         self.Controls.Add(self.queue_list)
 
-        # 完成列表
-        self.finished_list = ListBox()
-        self.finished_list.Location = Point(20, 300)
-        self.finished_list.Size = Size(800, 200)
-        self.Controls.Add(self.finished_list)
+        # 完成列表改為 DataGridView
+        self.finished_grid = DataGridView()
+        self.finished_grid.Location = Point(20, 300)
+        self.finished_grid.Size = Size(800, 200)
+        self.finished_grid.ReadOnly = True
+        self.finished_grid.ColumnHeadersHeightSizeMode = (
+            DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        )
+        self.finished_grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+
+        file_col = DataGridViewTextBoxColumn()
+        file_col.HeaderText = "File"
+        start_col = DataGridViewTextBoxColumn()
+        start_col.HeaderText = "Start Time"
+        stop_col = DataGridViewTextBoxColumn()
+        stop_col.HeaderText = "Stop Time"
+        dur_col = DataGridViewTextBoxColumn()
+        dur_col.HeaderText = "Duration"
+
+        self.finished_grid.Columns.Add(file_col)
+        self.finished_grid.Columns.Add(start_col)
+        self.finished_grid.Columns.Add(stop_col)
+        self.finished_grid.Columns.Add(dur_col)
+
+        self.Controls.Add(self.finished_grid)
 
         self.queue_paths = []
         self.finished_paths = []
         self.tooltip = ToolTip()
         self.queue_list.MouseMove += self.show_queue_tooltip
-        self.finished_list.MouseMove += self.show_finished_tooltip
+        self.finished_grid.MouseMove += self.show_finished_tooltip
 
         self.is_simulating = False
         self.current_file = None
@@ -145,13 +169,14 @@ class MyForm(Form):
             self.tooltip.SetToolTip(self.queue_list, "")
 
     def show_finished_tooltip(self, sender, event):
-        idx = self.finished_list.IndexFromPoint(event.Location)
-        if idx != -1 and idx < len(self.finished_paths):
+        hit = self.finished_grid.HitTest(event.X, event.Y)
+        idx = hit.RowIndex
+        if idx >= 0 and idx < len(self.finished_paths):
             text = self.finished_paths[idx]
-            if self.tooltip.GetToolTip(self.finished_list) != text:
-                self.tooltip.SetToolTip(self.finished_list, text)
+            if self.tooltip.GetToolTip(self.finished_grid) != text:
+                self.tooltip.SetToolTip(self.finished_grid, text)
         else:
-            self.tooltip.SetToolTip(self.finished_list, "")
+            self.tooltip.SetToolTip(self.finished_grid, "")
 
     def start_simulation(self, sender=None, event=None):
         if self.is_simulating:
@@ -166,6 +191,7 @@ class MyForm(Form):
             file_path = self.queue_paths[0]
             self.current_file = file_path
             self.status_label.Text = "Simulating: " + file_path
+            start_time = System.DateTime.Now
             if file_path.lower().endswith('.aedt'):
                 cmd = (
                     r'"C:\\Program Files\\ANSYS Inc\\v251\\AnsysEM\\ansysedt" '
@@ -174,9 +200,16 @@ class MyForm(Form):
                 subprocess.call(cmd, shell=True)
             else:
                 System.Threading.Thread.Sleep(1000)
+            stop_time = System.DateTime.Now
+            duration = stop_time - start_time
             self.queue_list.Items.RemoveAt(0)
             del self.queue_paths[0]
-            self.finished_list.Items.Add(Path.GetFileName(file_path))
+            self.finished_grid.Rows.Add(
+                Path.GetFileName(file_path),
+                start_time.ToString(),
+                stop_time.ToString(),
+                str(duration)
+            )
             self.finished_paths.append(file_path)
             self.current_file = None
         self.status_label.Text = "Finished"
