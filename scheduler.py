@@ -16,6 +16,7 @@ from System.Windows.Forms import (
     ToolTip,
     DataGridView,
     DataGridViewTextBoxColumn,
+    DataGridViewSelectionMode,
     CheckBox,
     DataGridViewAutoSizeColumnsMode,
     DataGridViewColumnHeadersHeightSizeMode,
@@ -109,6 +110,9 @@ class MyForm(Form):
         )
         self.queue_grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
         self.queue_grid.ShowCellToolTips = False
+        self.queue_grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        self.queue_grid.MultiSelect = True
+        self.queue_grid.SelectionChanged += self.prevent_select_running
         self.queue_grid.CellDoubleClick += self.open_queue_folder
 
         q_file_col = DataGridViewTextBoxColumn()
@@ -205,6 +209,12 @@ class MyForm(Form):
             self.queue_grid.Rows[i].DefaultCellStyle.BackColor = Color.White
         if self.is_simulating and self.queue_grid.Rows.Count > 0:
             self.queue_grid.Rows[0].DefaultCellStyle.BackColor = Color.LightGreen
+        self.prevent_select_running(None, None)
+
+    def prevent_select_running(self, sender, event):
+        if self.is_simulating and self.queue_grid.Rows.Count > 0:
+            if self.queue_grid.Rows[0].Selected:
+                self.queue_grid.Rows[0].Selected = False
 
     def add_file(self, sender, event):
         dialog = OpenFileDialog()
@@ -240,17 +250,20 @@ class MyForm(Form):
                 self.highlight_current_row()
 
     def remove_file(self, sender, event):
-        index = -1
-        if self.queue_grid.SelectedCells.Count > 0:
-            index = self.queue_grid.SelectedCells[0].RowIndex
-        if index != -1:
-            if self.is_simulating and index == 0:
-                MessageBox.Show("Cannot remove file being simulated.")
-                return
-            self.queue_grid.Rows.RemoveAt(index)
-            del self.queue_paths[index]
-            del self.queue_times[index]
-            del self.queue_ngs[index]
+        if self.queue_grid.SelectedCells.Count == 0:
+            return
+        indices = sorted(set([cell.RowIndex for cell in self.queue_grid.SelectedCells]), reverse=True)
+        removed = False
+        if self.is_simulating and 0 in indices:
+            MessageBox.Show("Cannot remove file being simulated.")
+            indices = [i for i in indices if i != 0]
+        for idx in indices:
+            self.queue_grid.Rows.RemoveAt(idx)
+            del self.queue_paths[idx]
+            del self.queue_times[idx]
+            del self.queue_ngs[idx]
+            removed = True
+        if removed:
             self.highlight_current_row()
 
     def move_up(self, sender, event):
