@@ -35,13 +35,13 @@ class MyForm(Form):
 
         # 排程列表
         self.queue_list = ListBox()
-        self.queue_list.Location = Point(20, 50)
+        self.queue_list.Location = Point(20, 90)
         self.queue_list.Size = Size(800, 200)
         self.Controls.Add(self.queue_list)
 
         # 完成列表
         self.finished_list = ListBox()
-        self.finished_list.Location = Point(20, 260)
+        self.finished_list.Location = Point(20, 300)
         self.finished_list.Size = Size(800, 200)
         self.Controls.Add(self.finished_list)
 
@@ -51,28 +51,28 @@ class MyForm(Form):
         # 新增檔案按鈕
         self.add_button = Button()
         self.add_button.Text = "Add File"
-        self.add_button.Location = Point(20, 480)
+        self.add_button.Location = Point(20, 50)
         self.add_button.Click += self.add_file
         self.Controls.Add(self.add_button)
 
         # 移除檔案按鈕
         self.remove_button = Button()
         self.remove_button.Text = "Remove"
-        self.remove_button.Location = Point(110, 480)
+        self.remove_button.Location = Point(110, 50)
         self.remove_button.Click += self.remove_file
         self.Controls.Add(self.remove_button)
 
         # 上移按鈕
         self.up_button = Button()
         self.up_button.Text = "Up"
-        self.up_button.Location = Point(200, 480)
+        self.up_button.Location = Point(200, 50)
         self.up_button.Click += self.move_up
         self.Controls.Add(self.up_button)
 
         # 下移按鈕
         self.down_button = Button()
         self.down_button.Text = "Down"
-        self.down_button.Location = Point(260, 480)
+        self.down_button.Location = Point(260, 50)
         self.down_button.Click += self.move_down
         self.Controls.Add(self.down_button)
 
