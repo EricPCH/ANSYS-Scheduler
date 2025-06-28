@@ -197,6 +197,12 @@ class MyForm(Form):
             files_added = False
             for fname in dialog.FileNames:
                 if fname.lower().endswith('.aedt') or fname.lower().endswith('.aedtz'):
+                    lock_path = fname + '.lock'
+                    if os.path.isfile(lock_path):
+                        try:
+                            os.remove(lock_path)
+                        except Exception:
+                            pass
                     self.queue_paths.append(fname)
                     submit_time = System.DateTime.Now
                     self.queue_times.append(submit_time)
