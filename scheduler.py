@@ -48,6 +48,13 @@ class MyForm(Form):
         self.status_label.Size = Size(800, 20)
         self.Controls.Add(self.status_label)
 
+        # Queue Jobs label
+        self.queue_label = Label()
+        self.queue_label.Text = "Queue Jobs"
+        self.queue_label.AutoSize = True
+        self.queue_label.Location = Point(20, 70)
+        self.Controls.Add(self.queue_label)
+
         # 排程列表改為 DataGridView
         self.queue_grid = DataGridView()
         self.queue_grid.Location = Point(20, 90)
@@ -75,6 +82,13 @@ class MyForm(Form):
         self.queue_grid.Columns.Add(path_col)
 
         self.Controls.Add(self.queue_grid)
+
+        # Completed Jobs label
+        self.finished_label = Label()
+        self.finished_label.Text = "Completed Jobs"
+        self.finished_label.AutoSize = True
+        self.finished_label.Location = Point(20, 280)
+        self.Controls.Add(self.finished_label)
 
         # 完成列表改為 DataGridView
         self.finished_grid = DataGridView()
