@@ -184,6 +184,9 @@ class MyForm(Form):
 
         self.is_simulating = False
         self.current_file = None
+        self.current_process = None
+        self.stop_event = threading.Event()
+        self.FormClosing += self.on_close
 
     def add_file(self, sender, event):
         dialog = OpenFileDialog()
@@ -291,7 +294,7 @@ class MyForm(Form):
         self.sim_thread.start()
 
     def run_simulation(self):
-        while len(self.queue_paths) > 0:
+        while len(self.queue_paths) > 0 and not self.stop_event.is_set():
             file_path = self.queue_paths[0]
             ng_flag = self.queue_ngs[0]
             self.current_file = file_path
@@ -303,7 +306,11 @@ class MyForm(Form):
                     ng='-ng ' if ng_flag else '',
                     file=file_path,
                 )
-                subprocess.call(cmd, shell=True)
+                self.current_process = subprocess.Popen(cmd, shell=True)
+                self.current_process.wait()
+                self.current_process = None
+                if self.stop_event.is_set():
+                    break
             else:
                 System.Threading.Thread.Sleep(1000)
             stop_time = System.DateTime.Now
@@ -313,17 +320,28 @@ class MyForm(Form):
             del self.queue_paths[0]
             del self.queue_times[0]
             del self.queue_ngs[0]
-            self.finished_grid.Rows.Add(
-                Path.GetFileName(file_path),
-                start_time.ToString(),
-                stop_time.ToString(),
-                duration_str,
-                file_path,
-            )
-            self.finished_paths.append(file_path)
+            if not self.stop_event.is_set():
+                self.finished_grid.Rows.Add(
+                    Path.GetFileName(file_path),
+                    start_time.ToString(),
+                    stop_time.ToString(),
+                    duration_str,
+                    file_path,
+                )
+                self.finished_paths.append(file_path)
             self.current_file = None
         self.status_label.Text = "Finished"
         self.is_simulating = False
+
+    def on_close(self, sender, event):
+        self.stop_event.set()
+        if self.current_process is not None and self.current_process.poll() is None:
+            try:
+                self.current_process.terminate()
+            except Exception:
+                pass
+        if hasattr(self, 'sim_thread') and self.sim_thread.is_alive():
+            self.sim_thread.join(1)
 
 form = MyForm()
 form.ShowDialog()
