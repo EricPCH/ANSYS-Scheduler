@@ -58,6 +58,7 @@ class MyForm(Form):
             DataGridViewColumnHeadersHeightSizeMode.AutoSize
         )
         self.queue_grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+        self.queue_grid.ShowCellToolTips = False
 
         q_file_col = DataGridViewTextBoxColumn()
         q_file_col.HeaderText = "File"
@@ -85,6 +86,7 @@ class MyForm(Form):
             DataGridViewColumnHeadersHeightSizeMode.AutoSize
         )
         self.finished_grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+        self.finished_grid.ShowCellToolTips = False
 
         file_col = DataGridViewTextBoxColumn()
         file_col.HeaderText = "File"
