@@ -262,6 +262,7 @@ class MyForm(Form):
                 System.Threading.Thread.Sleep(1000)
             stop_time = System.DateTime.Now
             duration = stop_time - start_time
+            duration_str = str(duration).split(".")[0]
             self.queue_grid.Rows.RemoveAt(0)
             del self.queue_paths[0]
             del self.queue_times[0]
@@ -270,7 +271,7 @@ class MyForm(Form):
                 Path.GetFileName(file_path),
                 start_time.ToString(),
                 stop_time.ToString(),
-                str(duration),
+                duration_str,
                 file_path,
             )
             self.finished_paths.append(file_path)
