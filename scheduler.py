@@ -14,8 +14,10 @@ from System.Windows.Forms import (
     MessageBox,
     DialogResult,
     Control,
+    ToolTip,
 )
 from System.Drawing import Point, Size
+from System.IO import Path
 import System.Threading
 import threading
 import subprocess
@@ -44,6 +46,12 @@ class MyForm(Form):
         self.finished_list.Location = Point(20, 300)
         self.finished_list.Size = Size(800, 200)
         self.Controls.Add(self.finished_list)
+
+        self.queue_paths = []
+        self.finished_paths = []
+        self.tooltip = ToolTip()
+        self.queue_list.MouseMove += self.show_queue_tooltip
+        self.finished_list.MouseMove += self.show_finished_tooltip
 
         self.is_simulating = False
         self.current_file = None
@@ -83,7 +91,8 @@ class MyForm(Form):
         if dialog.ShowDialog() == DialogResult.OK:
             fname = dialog.FileName
             if fname.lower().endswith('.aedt') or fname.lower().endswith('.aedtz'):
-                self.queue_list.Items.Add(fname)
+                self.queue_paths.append(fname)
+                self.queue_list.Items.Add(Path.GetFileName(fname))
                 if not self.is_simulating:
                     self.start_simulation()
             else:
@@ -96,6 +105,7 @@ class MyForm(Form):
                 MessageBox.Show("Cannot remove file being simulated.")
                 return
             self.queue_list.Items.RemoveAt(index)
+            del self.queue_paths[index]
 
     def move_up(self, sender, event):
         index = self.queue_list.SelectedIndex
@@ -106,6 +116,9 @@ class MyForm(Form):
             item = self.queue_list.Items[index]
             self.queue_list.Items.RemoveAt(index)
             self.queue_list.Items.Insert(index - 1, item)
+            path = self.queue_paths[index]
+            del self.queue_paths[index]
+            self.queue_paths.insert(index - 1, path)
             self.queue_list.SelectedIndex = index - 1
 
     def move_down(self, sender, event):
@@ -117,7 +130,28 @@ class MyForm(Form):
             item = self.queue_list.Items[index]
             self.queue_list.Items.RemoveAt(index)
             self.queue_list.Items.Insert(index + 1, item)
+            path = self.queue_paths[index]
+            del self.queue_paths[index]
+            self.queue_paths.insert(index + 1, path)
             self.queue_list.SelectedIndex = index + 1
+
+    def show_queue_tooltip(self, sender, event):
+        idx = self.queue_list.IndexFromPoint(event.Location)
+        if idx != -1 and idx < len(self.queue_paths):
+            text = self.queue_paths[idx]
+            if self.tooltip.GetToolTip(self.queue_list) != text:
+                self.tooltip.SetToolTip(self.queue_list, text)
+        else:
+            self.tooltip.SetToolTip(self.queue_list, "")
+
+    def show_finished_tooltip(self, sender, event):
+        idx = self.finished_list.IndexFromPoint(event.Location)
+        if idx != -1 and idx < len(self.finished_paths):
+            text = self.finished_paths[idx]
+            if self.tooltip.GetToolTip(self.finished_list) != text:
+                self.tooltip.SetToolTip(self.finished_list, text)
+        else:
+            self.tooltip.SetToolTip(self.finished_list, "")
 
     def start_simulation(self, sender=None, event=None):
         if self.is_simulating:
@@ -128,8 +162,8 @@ class MyForm(Form):
         self.sim_thread.start()
 
     def run_simulation(self):
-        while self.queue_list.Items.Count > 0:
-            file_path = self.queue_list.Items[0]
+        while len(self.queue_paths) > 0:
+            file_path = self.queue_paths[0]
             self.current_file = file_path
             self.status_label.Text = "Simulating: " + file_path
             if file_path.lower().endswith('.aedt'):
@@ -141,7 +175,9 @@ class MyForm(Form):
             else:
                 System.Threading.Thread.Sleep(1000)
             self.queue_list.Items.RemoveAt(0)
-            self.finished_list.Items.Add(file_path)
+            del self.queue_paths[0]
+            self.finished_list.Items.Add(Path.GetFileName(file_path))
+            self.finished_paths.append(file_path)
             self.current_file = None
         self.status_label.Text = "Finished"
         self.is_simulating = False
