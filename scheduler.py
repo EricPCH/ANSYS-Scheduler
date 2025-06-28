@@ -142,7 +142,7 @@ class MyForm(Form):
         # 下移按鈕
         self.down_button = Button()
         self.down_button.Text = "Down"
-        self.down_button.Location = Point(260, 50)
+        self.down_button.Location = Point(280, 50)
         self.down_button.Click += self.move_down
         self.Controls.Add(self.down_button)
 
