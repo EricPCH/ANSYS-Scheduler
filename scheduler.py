@@ -138,7 +138,7 @@ class MyForm(Form):
         # 非圖形化模式選項
         self.ng_checkbox = CheckBox()
         self.ng_checkbox.Text = "Non Graphical"
-        self.ng_checkbox.Location = Point(330, 50)
+        self.ng_checkbox.Location = Point(360, 50)
         self.Controls.Add(self.ng_checkbox)
 
     def add_file(self, sender, event):
