@@ -25,6 +25,7 @@ from System.Windows.Forms import (
     DockStyle,
     RowStyle,
     SizeType,
+    FormWindowState,
 )
 from System.Drawing import Size, Color
 from System.IO import Path
@@ -40,6 +41,7 @@ class MyForm(Form):
         self.FormBorderStyle = FormBorderStyle.FixedSingle
         self.MaximizeBox = False
         Control.CheckForIllegalCrossThreadCalls = False
+        self.Load += self.on_load
 
         self.ansysedt_path = os.environ.get(
             "ANSYSEDT_PATH",
@@ -187,6 +189,9 @@ class MyForm(Form):
         self.current_process = None
         self.stop_event = threading.Event()
         self.FormClosing += self.on_close
+
+    def on_load(self, sender, event):
+        self.WindowState = FormWindowState.Normal
 
     def highlight_current_row(self):
         for i in range(self.queue_grid.Rows.Count):
