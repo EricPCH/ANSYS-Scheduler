@@ -13,15 +13,18 @@ from System.Windows.Forms import (
     Application,
     MessageBox,
     DialogResult,
+    Control,
 )
 from System.Drawing import Point, Size
 import System.Threading
+import threading
 import subprocess
 
 class MyForm(Form):
     def __init__(self):
         self.Text = "AEDT Scheduler"
         self.Size = Size(840, 550)
+        Control.CheckForIllegalCrossThreadCalls = False
 
         # 狀態顯示
         self.status_label = Label()
@@ -117,12 +120,18 @@ class MyForm(Form):
             self.queue_list.SelectedIndex = index + 1
 
     def start_simulation(self, sender=None, event=None):
+        if self.is_simulating:
+            return
         self.is_simulating = True
+        self.sim_thread = threading.Thread(target=self.run_simulation)
+        self.sim_thread.IsBackground = True
+        self.sim_thread.start()
+
+    def run_simulation(self):
         while self.queue_list.Items.Count > 0:
             file_path = self.queue_list.Items[0]
             self.current_file = file_path
             self.status_label.Text = "Simulating: " + file_path
-            Application.DoEvents()
             if file_path.lower().endswith('.aedt'):
                 cmd = (
                     r'"C:\\Program Files\\ANSYS Inc\\v251\\AnsysEM\\ansysedt" '
