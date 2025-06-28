@@ -43,6 +43,7 @@ class MyForm(Form):
         self.queue_grid.Location = Point(20, 90)
         self.queue_grid.Size = Size(800, 200)
         self.queue_grid.ReadOnly = True
+        self.queue_grid.AllowUserToAddRows = False
         self.queue_grid.ColumnHeadersHeightSizeMode = (
             DataGridViewColumnHeadersHeightSizeMode.AutoSize
         )
@@ -52,9 +53,12 @@ class MyForm(Form):
         q_file_col.HeaderText = "File"
         submit_col = DataGridViewTextBoxColumn()
         submit_col.HeaderText = "Submit Time"
+        path_col = DataGridViewTextBoxColumn()
+        path_col.HeaderText = "Full Path"
 
         self.queue_grid.Columns.Add(q_file_col)
         self.queue_grid.Columns.Add(submit_col)
+        self.queue_grid.Columns.Add(path_col)
 
         self.Controls.Add(self.queue_grid)
 
@@ -63,6 +67,7 @@ class MyForm(Form):
         self.finished_grid.Location = Point(20, 300)
         self.finished_grid.Size = Size(800, 200)
         self.finished_grid.ReadOnly = True
+        self.finished_grid.AllowUserToAddRows = False
         self.finished_grid.ColumnHeadersHeightSizeMode = (
             DataGridViewColumnHeadersHeightSizeMode.AutoSize
         )
@@ -76,11 +81,14 @@ class MyForm(Form):
         stop_col.HeaderText = "Stop Time"
         dur_col = DataGridViewTextBoxColumn()
         dur_col.HeaderText = "Duration"
+        path2_col = DataGridViewTextBoxColumn()
+        path2_col.HeaderText = "Full Path"
 
         self.finished_grid.Columns.Add(file_col)
         self.finished_grid.Columns.Add(start_col)
         self.finished_grid.Columns.Add(stop_col)
         self.finished_grid.Columns.Add(dur_col)
+        self.finished_grid.Columns.Add(path2_col)
 
         self.Controls.Add(self.finished_grid)
 
@@ -133,7 +141,9 @@ class MyForm(Form):
                 submit_time = System.DateTime.Now
                 self.queue_times.append(submit_time)
                 self.queue_grid.Rows.Add(
-                    Path.GetFileName(fname), submit_time.ToString()
+                    Path.GetFileName(fname),
+                    submit_time.ToString(),
+                    fname,
                 )
                 if not self.is_simulating:
                     self.start_simulation()
@@ -170,6 +180,9 @@ class MyForm(Form):
         index = -1
         if self.queue_grid.SelectedCells.Count > 0:
             index = self.queue_grid.SelectedCells[0].RowIndex
+        if index != -1 and index == self.queue_grid.Rows.Count - 1:
+            MessageBox.Show("Cannot move down last item.")
+            return
         if index != -1 and index < self.queue_grid.Rows.Count - 1:
             if self.is_simulating and index == 0:
                 MessageBox.Show("Cannot move file being simulated.")
@@ -237,7 +250,8 @@ class MyForm(Form):
                 Path.GetFileName(file_path),
                 start_time.ToString(),
                 stop_time.ToString(),
-                str(duration)
+                str(duration),
+                file_path,
             )
             self.finished_paths.append(file_path)
             self.current_file = None
