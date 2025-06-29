@@ -3,6 +3,7 @@
 import clr
 clr.AddReference('System.Windows.Forms')
 clr.AddReference('System.Drawing')
+clr.AddReference('System')
 
 from System.Windows.Forms import (
     Form,
@@ -32,10 +33,32 @@ from System.Windows.Forms import (
 )
 from System.Drawing import Size, Color
 from System.IO import Path
+from System.Diagnostics import Process
 import System.Threading
 import threading
 import subprocess
 import os
+
+
+class CPUTracker(object):
+    def __init__(self, process):
+        self.process = process
+        self.last_cpu = process.TotalProcessorTime
+        self.last_time = System.DateTime.Now
+
+    def percent(self):
+        current_cpu = self.process.TotalProcessorTime
+        current_time = System.DateTime.Now
+        delta = current_cpu - self.last_cpu
+        elapsed = current_time - self.last_time
+        self.last_cpu = current_cpu
+        self.last_time = current_time
+        if elapsed.TotalMilliseconds <= 0:
+            return 0.0
+        cpu_count = os.cpu_count() or 1
+        return (
+            delta.TotalMilliseconds / elapsed.TotalMilliseconds / cpu_count * 100
+        )
 
 class MyForm(Form):
     def __init__(self):
@@ -64,14 +87,17 @@ class MyForm(Form):
             self.psutil = psutil
         except Exception:
             self.psutil = None
+        self.self_proc_net = Process.GetCurrentProcess()
+        self.self_tracker = CPUTracker(self.self_proc_net)
+        self.child_tracker = None
         if self.psutil is not None:
             self.self_proc = self.psutil.Process(os.getpid())
             self.self_proc.cpu_percent(interval=None)
-            self.update_timer = Timer()
-            self.update_timer.Interval = 1000
-            self.update_timer.Tick += self.update_resource_usage
-            self.update_timer.Start()
-            self.update_resource_usage(None, None)
+        self.update_timer = Timer()
+        self.update_timer.Interval = 1000
+        self.update_timer.Tick += self.update_resource_usage
+        self.update_timer.Start()
+        self.update_resource_usage(None, None)
 
         # 按鈕列使用 FlowLayoutPanel
         self.button_panel = FlowLayoutPanel()
@@ -222,18 +248,31 @@ class MyForm(Form):
         self.WindowState = FormWindowState.Normal
 
     def update_resource_usage(self, sender, event):
-        if self.psutil is None:
-            self.status_label.Text = self.base_status_text
-            return
-        cpu = self.self_proc.cpu_percent(interval=None)
-        mem = self.self_proc.memory_info().rss
-        if self.current_process is not None:
-            try:
-                child = self.psutil.Process(self.current_process.pid)
-                cpu += child.cpu_percent(interval=None)
-                mem += child.memory_info().rss
-            except Exception:
-                pass
+        if self.psutil is not None:
+            cpu = self.self_proc.cpu_percent(interval=None)
+            mem = self.self_proc.memory_info().rss
+            if self.current_process is not None:
+                try:
+                    child = self.psutil.Process(self.current_process.pid)
+                    cpu += child.cpu_percent(interval=None)
+                    mem += child.memory_info().rss
+                except Exception:
+                    pass
+        else:
+            cpu = self.self_tracker.percent()
+            mem = self.self_proc_net.WorkingSet64
+            if self.current_process is not None:
+                try:
+                    child = Process.GetProcessById(self.current_process.pid)
+                    if (
+                        self.child_tracker is None
+                        or self.child_tracker.process.Id != child.Id
+                    ):
+                        self.child_tracker = CPUTracker(child)
+                    cpu += self.child_tracker.percent()
+                    mem += child.WorkingSet64
+                except Exception:
+                    pass
         info = "CPU: {:.1f}% | Mem: {:.1f} MB".format(cpu, mem / 1024.0 / 1024.0)
         self.status_label.Text = self.base_status_text + " | " + info
 
@@ -400,8 +439,16 @@ class MyForm(Form):
                     cmd.append("-ng")
                 cmd.append(file_path)
                 self.current_process = subprocess.Popen(cmd)
+                if self.psutil is None:
+                    try:
+                        self.child_tracker = CPUTracker(
+                            Process.GetProcessById(self.current_process.pid)
+                        )
+                    except Exception:
+                        self.child_tracker = None
                 self.current_process.wait()
                 self.current_process = None
+                self.child_tracker = None
                 if self.stop_event.is_set():
                     break
             else:
@@ -428,9 +475,10 @@ class MyForm(Form):
         self.base_status_text = "Finished"
         self.update_resource_usage(None, None)
         self.is_simulating = False
-        
+
     def on_close(self, sender, event):
         self.stop_event.set()
+        self.child_tracker = None
         if self.current_process is not None and self.current_process.poll() is None:
             try:
                 self.current_process.terminate()
