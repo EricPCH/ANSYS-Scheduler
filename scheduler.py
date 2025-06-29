@@ -28,6 +28,7 @@ from System.Windows.Forms import (
     SizeType,
     FormWindowState,
     DataGridViewColumnSortMode,
+    Timer,
 )
 from System.Drawing import Size, Color
 from System.IO import Path
@@ -52,9 +53,25 @@ class MyForm(Form):
 
         # 狀態顯示
         self.status_label = Label()
-        self.status_label.Text = "Ready"
+        self.base_status_text = "Ready"
+        self.status_label.Text = self.base_status_text
         self.status_label.AutoSize = True
         self.status_label.Dock = DockStyle.Top
+
+        # 設定資源使用監視
+        try:
+            import psutil  # type: ignore
+            self.psutil = psutil
+        except Exception:
+            self.psutil = None
+        if self.psutil is not None:
+            self.self_proc = self.psutil.Process(os.getpid())
+            self.self_proc.cpu_percent(interval=None)
+            self.update_timer = Timer()
+            self.update_timer.Interval = 1000
+            self.update_timer.Tick += self.update_resource_usage
+            self.update_timer.Start()
+            self.update_resource_usage(None, None)
 
         # 按鈕列使用 FlowLayoutPanel
         self.button_panel = FlowLayoutPanel()
@@ -203,6 +220,22 @@ class MyForm(Form):
 
     def on_load(self, sender, event):
         self.WindowState = FormWindowState.Normal
+
+    def update_resource_usage(self, sender, event):
+        if self.psutil is None:
+            self.status_label.Text = self.base_status_text
+            return
+        cpu = self.self_proc.cpu_percent(interval=None)
+        mem = self.self_proc.memory_info().rss
+        if self.current_process is not None:
+            try:
+                child = self.psutil.Process(self.current_process.pid)
+                cpu += child.cpu_percent(interval=None)
+                mem += child.memory_info().rss
+            except Exception:
+                pass
+        info = "CPU: {:.1f}% | Mem: {:.1f} MB".format(cpu, mem / 1024.0 / 1024.0)
+        self.status_label.Text = self.base_status_text + " | " + info
 
     def highlight_current_row(self):
         for i in range(self.queue_grid.Rows.Count):
@@ -358,7 +391,8 @@ class MyForm(Form):
             file_path = self.queue_paths[0]
             ng_flag = self.queue_ngs[0]
             self.current_file = file_path
-            self.status_label.Text = "Simulating: " + file_path
+            self.base_status_text = "Simulating: " + file_path
+            self.update_resource_usage(None, None)
             start_time = System.DateTime.Now
             if file_path.lower().endswith('.aedt'):
                 cmd = [self.ansysedt_path, "-batchsolve"]
@@ -391,7 +425,8 @@ class MyForm(Form):
                 self.finished_paths.append(file_path)
             self.current_file = None
         self.highlight_current_row()
-        self.status_label.Text = "Finished"
+        self.base_status_text = "Finished"
+        self.update_resource_usage(None, None)
         self.is_simulating = False
         
     def on_close(self, sender, event):
