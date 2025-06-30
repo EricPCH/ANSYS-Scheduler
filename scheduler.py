@@ -47,7 +47,7 @@ import json
 
 CONFIG_FILE = "config.json"
 # Default path for 2051R1 installation used when config does not exist
-DEFAULT_EDT_PATH = r"C:\Program Files\ANSYS Inc\v2051r1\AnsysEM\ansysedt"
+DEFAULT_EDT_PATH = r"C:\Program Files\ANSYS Inc\v251\AnsysEM\ansysedt"
 
 
 class SettingsForm(Form):
