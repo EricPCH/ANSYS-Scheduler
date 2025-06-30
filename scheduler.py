@@ -46,6 +46,8 @@ import os
 import json
 
 CONFIG_FILE = "config.json"
+# Default path for 2051R1 installation used when config does not exist
+DEFAULT_EDT_PATH = r"C:\Program Files\ANSYS Inc\v2051r1\AnsysEM\ansysedt"
 
 
 class SettingsForm(Form):
@@ -103,10 +105,7 @@ class MyForm(Form):
         Control.CheckForIllegalCrossThreadCalls = False
         self.Load += self.on_load
 
-        self.ansysedt_path = os.environ.get(
-            "ANSYSEDT_PATH",
-            r"C:\Program Files\ANSYS Inc\v251\AnsysEM\ansysedt",
-        )
+        self.ansysedt_path = os.environ.get("ANSYSEDT_PATH", DEFAULT_EDT_PATH)
         self.load_config()
         if not os.path.isfile(self.ansysedt_path):
             MessageBox.Show(
@@ -281,10 +280,12 @@ class MyForm(Form):
 
     def load_config(self):
         try:
-            if os.path.isfile(CONFIG_FILE):
-                with open(CONFIG_FILE, "r") as f:
-                    data = json.load(f)
-                    self.ansysedt_path = data.get("ansysedt_path", self.ansysedt_path)
+            if not os.path.isfile(CONFIG_FILE):
+                with open(CONFIG_FILE, "w") as f:
+                    json.dump({"ansysedt_path": DEFAULT_EDT_PATH}, f)
+            with open(CONFIG_FILE, "r") as f:
+                data = json.load(f)
+                self.ansysedt_path = data.get("ansysedt_path", self.ansysedt_path)
         except Exception:
             pass
 
