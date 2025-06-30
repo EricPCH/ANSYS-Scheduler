@@ -31,3 +31,11 @@ simulation in non-graphical mode. Each file can be configured independently.
   2. `ANSYSEDT_PATH` 設定的 `ansysedt.exe` 目錄。
 * 在排程列表或完成列表中，雙擊 **Full Path** 欄位可開啟該檔案所在資料夾。
 
+## WPF Implementation
+
+The repository also includes a basic WPF application under the
+`SchedulerWpf` folder which replicates the functionality of the IronPython
+script.  Build the project with the .NET SDK and run the resulting
+executable.  The application reads the `ANSYSEDT_PATH` environment variable to
+locate `ansysedt.exe` in the same way as the script.
+
