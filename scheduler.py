@@ -34,6 +34,8 @@ from System.Windows.Forms import (
     TextBox,
     GroupBox,
     Panel,
+    Padding,
+    AnchorStyles,
 )
 from System.Drawing import Size, Color, Point
 from System.IO import Path
@@ -49,34 +51,37 @@ CONFIG_FILE = "config.json"
 class SettingsForm(Form):
     def __init__(self, current_path):
         self.Text = "Settings"
-        self.Size = Size(420, 120)
+        self.Size = Size(420, 150)
         self.FormBorderStyle = FormBorderStyle.FixedDialog
         self.MaximizeBox = False
         self.MinimizeBox = False
 
+        # GroupBox 容器
         path_group = GroupBox()
         path_group.Text = "ANSYSEDT Path"
-        path_group.Dock = DockStyle.Top
-        path_group.AutoSize = True
+        path_group.Dock = DockStyle.Fill
+
+        # 使用 TableLayoutPanel 排版
+        layout = TableLayoutPanel()
+        layout.ColumnCount = 2
+        layout.RowCount = 2
+        layout.Dock = DockStyle.Fill
+        layout.AutoSize = True
+        layout.Padding = Padding(10)
 
         self.path_box = TextBox()
         self.path_box.Text = current_path
-        self.path_box.Dock = DockStyle.Top
-        self.path_box.Width = 250
-
-        bottom_panel = Panel()
-        bottom_panel.Dock = DockStyle.Bottom
+        self.path_box.Dock = DockStyle.Fill
+        layout.Controls.Add(self.path_box, 0, 0)
+        layout.SetColumnSpan(self.path_box, 2)
 
         browse_btn = Button()
         browse_btn.Text = "Browse"
-        browse_btn.AutoSize = True
-        browse_btn.Dock = DockStyle.Right
+        browse_btn.Anchor = AnchorStyles.Right
         browse_btn.Click += self.browse
+        layout.Controls.Add(browse_btn, 1, 1)
 
-        bottom_panel.Controls.Add(browse_btn)
-        path_group.Controls.Add(bottom_panel)
-        path_group.Controls.Add(self.path_box)
-
+        path_group.Controls.Add(layout)
         self.Controls.Add(path_group)
 
     def browse(self, sender, event):
