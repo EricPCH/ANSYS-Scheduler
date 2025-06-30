@@ -64,24 +64,12 @@ class SettingsForm(Form):
 
         browse_btn = Button()
         browse_btn.Text = "Browse"
-        browse_btn.Location = Point(370, 10)
+        browse_btn.Location = Point(110, 50)
         browse_btn.Click += self.browse
-
-        ok_btn = Button()
-        ok_btn.Text = "OK"
-        ok_btn.Location = Point(220, 50)
-        ok_btn.Click += self.ok_clicked
-
-        cancel_btn = Button()
-        cancel_btn.Text = "Cancel"
-        cancel_btn.Location = Point(300, 50)
-        cancel_btn.Click += self.cancel_clicked
 
         self.Controls.Add(label)
         self.Controls.Add(self.path_box)
         self.Controls.Add(browse_btn)
-        self.Controls.Add(ok_btn)
-        self.Controls.Add(cancel_btn)
 
     def browse(self, sender, event):
         dialog = OpenFileDialog()
@@ -91,14 +79,6 @@ class SettingsForm(Form):
         if dialog.ShowDialog() == DialogResult.OK:
             self.path_box.Text = dialog.FileName
 
-    def ok_clicked(self, sender, event):
-        self.selected_path = self.path_box.Text.strip()
-        self.DialogResult = DialogResult.OK
-        self.Close()
-
-    def cancel_clicked(self, sender, event):
-        self.DialogResult = DialogResult.Cancel
-        self.Close()
 
 
 class MyForm(Form):
@@ -115,6 +95,10 @@ class MyForm(Form):
             r"C:\Program Files\ANSYS Inc\v251\AnsysEM\ansysedt",
         )
         self.load_config()
+        if not os.path.isfile(self.ansysedt_path):
+            MessageBox.Show(
+                "ANSYSEDT path is not set or does not exist. Please set it in Settings."
+            )
 
         # Menu
         self.menu_strip = MenuStrip()
@@ -300,9 +284,9 @@ class MyForm(Form):
 
     def open_settings(self, sender, event):
         dlg = SettingsForm(self.ansysedt_path)
-        if dlg.ShowDialog() == DialogResult.OK:
-            self.ansysedt_path = dlg.selected_path
-            self.save_config()
+        dlg.ShowDialog()
+        self.ansysedt_path = dlg.path_box.Text.strip()
+        self.save_config()
 
     def highlight_current_row(self):
         for i in range(self.queue_grid.Rows.Count):
