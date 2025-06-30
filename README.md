@@ -35,7 +35,9 @@ simulation in non-graphical mode. Each file can be configured independently.
 
 The repository also includes a basic WPF application under the
 `SchedulerWpf` folder which replicates the functionality of the IronPython
-script.  Build the project with the .NET SDK and run the resulting
-executable.  The application reads the `ANSYSEDT_PATH` environment variable to
-locate `ansysedt.exe` in the same way as the script.
+script.  A Visual Studio solution file `AEDTScheduler.sln` has been added so
+the project can be opened directly in Visual Studio.  You can also build the
+solution from the command line with the .NET SDK.  The application reads the
+`ANSYSEDT_PATH` environment variable to locate `ansysedt.exe` in the same way
+as the script.
 
