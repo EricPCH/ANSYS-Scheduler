@@ -123,7 +123,6 @@ class MyForm(Form):
         settings_item.Click += self.open_settings
         self.menu_strip.Items.Add(settings_item)
         self.MainMenuStrip = self.menu_strip
-        self.Controls.Add(self.menu_strip)
 
         # 狀態顯示
         self.status_label = Label()
@@ -264,6 +263,7 @@ class MyForm(Form):
         self.Controls.Add(self.data_layout)
         self.Controls.Add(self.button_panel)
         self.Controls.Add(self.status_label)
+        self.Controls.Add(self.menu_strip)
 
         self.queue_paths = []
         self.queue_times = []
