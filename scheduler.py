@@ -32,6 +32,8 @@ from System.Windows.Forms import (
     MenuStrip,
     ToolStripMenuItem,
     TextBox,
+    GroupBox,
+    Panel,
 )
 from System.Drawing import Size, Color, Point
 from System.IO import Path
@@ -52,24 +54,30 @@ class SettingsForm(Form):
         self.MaximizeBox = False
         self.MinimizeBox = False
 
-        label = Label()
-        label.Text = "ANSYSEDT Path:"
-        label.Location = Point(10, 15)
-        label.AutoSize = True
+        path_group = GroupBox()
+        path_group.Text = "ANSYSEDT Path"
+        path_group.Dock = DockStyle.Top
+        path_group.AutoSize = True
 
         self.path_box = TextBox()
         self.path_box.Text = current_path
-        self.path_box.Location = Point(110, 12)
+        self.path_box.Dock = DockStyle.Top
         self.path_box.Width = 250
+
+        bottom_panel = Panel()
+        bottom_panel.Dock = DockStyle.Bottom
 
         browse_btn = Button()
         browse_btn.Text = "Browse"
-        browse_btn.Location = Point(110, 50)
+        browse_btn.AutoSize = True
+        browse_btn.Dock = DockStyle.Right
         browse_btn.Click += self.browse
 
-        self.Controls.Add(label)
-        self.Controls.Add(self.path_box)
-        self.Controls.Add(browse_btn)
+        bottom_panel.Controls.Add(browse_btn)
+        path_group.Controls.Add(bottom_panel)
+        path_group.Controls.Add(self.path_box)
+
+        self.Controls.Add(path_group)
 
     def browse(self, sender, event):
         dialog = OpenFileDialog()
