@@ -13,8 +13,8 @@ longer a separate "Start" button.
 
 Use the **Add File** button to select one or more `.aedt` or `.aedtz` files.
 Run `run.bat` to start the application in an Ansys IronPython environment.
-Edit the `ANSYSEDT_PATH` variable inside `run.bat` if your installation lives
-in a different location.
+Use the **Settings** menu to set the full path to `ansysedt.exe`.  The value is
+stored in `config.json` so you only need to configure it once.
 
 Before adding a file you can tick the **Non Graphical** check box to run that
 simulation in non-graphical mode. Each file can be configured independently.
@@ -26,8 +26,7 @@ simulation in non-graphical mode. Each file can be configured independently.
 ## 使用說明
 
 * 請將 `scheduler.py` 和 `run.bat` 置於同一目錄中使用。
-* 要使用程式必須修改 `run.bat` 內的兩個路徑：
-  1. IronPython `ipy64.exe` 的範例路徑。
-  2. `ANSYSEDT_PATH` 設定的 `ansysedt.exe` 目錄。
+* 使用前可修改 `run.bat` 中 IronPython `ipy64.exe` 的路徑。
+* `ansysedt.exe` 的位置可以在程式的 **Settings** 視窗中設定，並會儲存在 `config.json`。
 * 在排程列表或完成列表中，雙擊 **Full Path** 欄位可開啟該檔案所在資料夾。
 
